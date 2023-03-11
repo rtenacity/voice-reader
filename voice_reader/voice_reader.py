@@ -7,7 +7,7 @@ import asyncio
 docs_url = "https://pynecone.io/docs/getting-started/introduction"
 filename = f"{config.app_name}/{config.app_name}.py"
 
-coins = ["tossup", "bonus"]
+coins = ["tossup", "bonus (non-functional)"]
 p1 = qbreader.set_list()
 p1.remove('2016 "stanford housewrite"')
 packets = p1
@@ -41,7 +41,10 @@ class State(pc.State):
         else:
             self.question = qbreader.random_question(questionType=self.question_type, difficulties=self.difficulty)
             print(self.question)
-            self.question_word_list = self.question[0]['question'].split(" ")
+            if self.question_type == "tossup":
+                self.question_word_list = self.question[0]['question'].split(" ")
+            else:
+                print(self.question)
 
     @pc.var
     def reader(self):
