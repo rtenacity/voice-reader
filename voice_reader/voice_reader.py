@@ -11,7 +11,7 @@ filename = f"{config.app_name}/{config.app_name}.py"
 coins = ["tossup"]
 p1 = qbreader.set_list()
 p1.remove('2016 "stanford housewrite"')
-p1.insert(0, "Random Packet")
+p1.insert(0, "Random Question")
 packets = p1
 
 categories = []
@@ -53,7 +53,7 @@ class State(pc.State):
         except:
             pass
             
-        if self.packet.strip() != "Random Packet":
+        if self.packet.strip() != "Random Question":
             self.packet_questions = qbreader.packet(
                 setName=self.packet, packetNumber=self.packet_num
             )
@@ -82,7 +82,7 @@ class State(pc.State):
     @pc.var
     def reader(self):
         try:
-            if self.packet.strip() == "Random Packet":
+            if self.packet.strip() == "Random Question":
                 self.answer = self.question["answer"]
                 if self.correct_buzz == True:
                     return self.question["question"]            
@@ -110,7 +110,6 @@ class State(pc.State):
     def answer_line(self) -> str:
         try:
             if self.finished == True or self.correct_buzz == True:
-                print(type(self.answer))
                 return str(self.answer)
             else:
                 return ""
@@ -161,13 +160,9 @@ class State(pc.State):
         self.start = False
 
     def buzz_logic(self):
-        print(self.question)
-        print((dict(self.question)["answer"]))
-        print(self.user_answer)
         self.checked_answer = qbreader.check_answer(
             self.question["answer"], self.user_answer
         )
-        print(self.checked_answer)
         if self.checked_answer[0] == "accept":
             self.buzzed = False
             self.correct_buzz = True
