@@ -14,6 +14,7 @@ p1.remove('2016 "stanford housewrite"')
 p1.insert(0, "Random Packet")
 packets = p1
 
+categories = []
 
 class State(pc.State):
     question_type = "tossup"
@@ -34,6 +35,11 @@ class State(pc.State):
     packet_tu: list = []
     generated:bool = False
     finished:bool = False
+    buzzed:bool = False
+    correct_buzz:bool = False
+    user_answer:str = ""
+    checked_answer:list = []
+    answer_status:str = "Buzz"
 
     def question_logic(self):
         try:
@@ -64,6 +70,8 @@ class State(pc.State):
         try:
             if self.packet.strip() == "Random Packet":
                     self.x += 1
+                    if self.correct_buzz == True:
+                        return self.question["question"]
                     self.on_screen.append(self.question_word_list[self.x])
                     return " ".join(self.on_screen)
             else:
@@ -71,11 +79,14 @@ class State(pc.State):
                     self.packet_tu = self.packet_questions["tossups"]
                     print(self.packet_tu)
                     self.question = self.packet_tu[self.question_num]
-                    print(self.question)
-                    self.question_word_list = self.question["question"].split(" ")
-                    self.x += 1
-                    self.on_screen.append(self.question_word_list[self.x])
-                    return " ".join(self.on_screen)
+                    if self.correct_buzz == True:
+                        return self.question["question"]
+                    else:
+                        print(self.question)
+                        self.question_word_list = self.question["question"].split(" ")
+                        self.x += 1
+                        self.on_screen.append(self.question_word_list[self.x])
+                        return " ".join(self.on_screen)
         except:
             if len(self.on_screen) > 1:
                 self.finished = True
@@ -84,7 +95,7 @@ class State(pc.State):
     @pc.var
     def answer_line(self):
         try:
-            if self.finished == True:
+            if self.finished == True or self.correct_buzz == True:
                 return (dict(self.question)['answer'])
             else:
                 return ""
@@ -94,7 +105,7 @@ class State(pc.State):
     async def tick(self):
         """Update the clock every second."""
         if self.start:
-            await asyncio.sleep(0.2)
+            await asyncio.sleep(0.15)
             return self.tick
 
     def flip_switch(self, start):
@@ -114,16 +125,51 @@ class State(pc.State):
         return self.tick
 
     def clear(self):
-        self.on_screen = []
-        self.question_word_list = []
+        self.packet_true = True
+        self.question_num = 0
         self.question = ""
+        self.packet_questions: dict = {}
+        self.question_word_list: list = []
+        self.on_screen: list = []
+        self.start: bool = False
         self.x = -2
-        self.generated = False
-        self.finished = False
+        self.packet_tu: list = []
+        self.generated:bool = False
+        self.finished:bool = False
+        self.buzzed:bool = False
+        self.correct_buzz:bool = False
+        self.user_answer:str = ""
+        self.checked_answer:list = []
+        self.answer_status:str = "Buzz"
+    
+    def open_buzz(self):
+        self.buzzed = True
+        self.start = False
+
+    def buzz_logic(self):
+        print(self.question)
+        print((dict(self.question)['answer']))
+        print(self.user_answer)
+        self.checked_answer = qbreader.check_answer(self.question['answer'], self.user_answer)
+        print(self.checked_answer)
+        if self.checked_answer[0] == "accept":
+            self.buzzed = False
+            self.correct_buzz = True
+            self.start = True
+            return self.tick
+        elif self.checked_answer[0] == "prompt":
+            self.answer_status = "Prompt"+ self.checked_answer[1]
+            self.correct_buzz = False
+        elif self.checked_answer[0] == "reject":
+            self.correct_buzz = False
+            self.buzzed = False
+            self.start = True
+            return self.tick
 
 def index():
     return pc.center(
         pc.vstack(
+        
             pc.hstack(
                 pc.box(
                     pc.select(
@@ -155,15 +201,40 @@ def index():
                     shadow="md",
                     on_click=[State.clear, State.question_logic, State.start_timer],
                 ),
+                pc.button(
+                    "Buzz",
+                    width="50%",
+                    shadow="md",
+                    on_click=State.open_buzz
+                ),
                 bg="white",
                 padding="2em",
                 shadow="md",
                 border_radius="lg",
                 width="100%",
+                position="fixed",
+            ),
+            pc.cond(
+                State.buzzed,
+                pc.hstack(
+                pc.input(
+                    placeholder=State.answer_status,
+                    width="50%",
+                    shadow="md",
+                    on_blur=State.set_user_answer,
+                ),
+                pc.button(
+                    "Submit",
+                    width="50%",
+                    shadow="md",
+                    on_click=[State.buzz_logic],
+                ),
+                ),
+
             ),
             pc.text(State.reader),
             pc.text(State.answer_line),
-            width = "50%"
+            width = "80%"
         ),
         width="100%",
         height="100vh",
