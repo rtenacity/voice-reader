@@ -1,12 +1,8 @@
-"""Welcome to Pynecone! This file outlines the steps to create a basic app."""
 from pcconfig import config
 import qbreader
 import pynecone as pc
 import asyncio
 import time
-
-docs_url = "https://pynecone.io/docs/getting-started/introduction"
-filename = f"{config.app_name}/{config.app_name}.py"
 
 coins = ["Literature", "Fine Arts", "Mythology", "Science", "Social Science", "Geography", "History", "Religion", "Trash", "Philosophy"]
 p1 = qbreader.set_list()
@@ -42,96 +38,17 @@ class State(pc.State):
     checked_answer: list = []
     answer_status: str = "Buzz"
     answer:str = ""
-
-    def question_logic(self):
-        try:
-            if "-" in self.difficulty_str:
-                str_list = self.difficulty_str.split("-")
-                self.difficulty = list(range(int(str_list[0]), int(str_list[1]) + 1))
-            else:
-                self.difficulty = [int(self.difficulty_str)]
-        except:
-            pass
-            
-        if self.packet.strip() != "Random Question":
-            try:
-                self.packet_questions = qbreader.packet(
-                    setName=self.packet, packetNumber=self.packet_num
-                )
-                self.generated = True
-                self.packet_tu = self.packet_questions["tossups"]
-                self.question = self.packet_tu[self.question_num]
-                self.answer = self.question["answer"]
-            except IndexError:
-                self.packet_num += 1
-                self.question_num = 0
-                self.packet_questions = qbreader.packet(
-                    setName=self.packet, packetNumber=self.packet_num
-                )
-                self.generated = True
-                self.packet_tu = self.packet_questions["tossups"]
-                self.question = self.packet_tu[self.question_num]
-                self.answer = self.question["answer"]
-
-        else:
-            question_raw = qbreader.random_question(
-                questionType=self.question_type, difficulties=self.difficulty
-            )
-            self.question = dict(question_raw[0])
-            self.answer = self.question["answer"]
-            self.generated = True
-            if self.question_type == "tossup":
-                self.question_word_list = self.question["question"].split(" ")
-            else:
-                pass
-
-        self.start = True
-        return self.tick
-
+    
     def start_packet(self):
         self.question_num = 0
     
     def next_question(self):
         self.question_num +=1
-        
-    
-    @pc.var
-    def reader(self):
-        try:
-            if self.packet.strip() == "Random Question":
-                if self.correct_buzz == True:
-                    return self.question["question"]            
-                self.on_screen.append(self.question_word_list[self.x])
-                self.x += 1
-                return " ".join(self.on_screen)
-            else:
-                if self.packet_questions != {}:
-                    if self.correct_buzz == True:
-                        return self.question["question"]
-                    else:
-                        self.question_word_list = self.question["question"].split(" ")
-                        self.on_screen.append(self.question_word_list[self.x])
-                        self.x += 1
-                        return " ".join(self.on_screen)
-        except:
-            if len(self.on_screen) > 1:
-                self.finished = True
-            return " ".join(self.on_screen)
-
-    @pc.var
-    def answer_line(self) -> str:
-        try:
-            if self.finished == True or self.correct_buzz == True:
-                return str(self.answer)
-            else:
-                return ""
-        except:
-            return ""
 
     async def tick(self):
         """Update the clock every second."""
         if self.start:
-            await asyncio.sleep(0.2)
+            await asyncio.sleep(0.18)
             return self.tick
 
     def flip_switch(self, start):
@@ -153,7 +70,6 @@ class State(pc.State):
     def clear(self):
         self.packet_true = True
         self.question = ""
-        self.packet_questions: dict = {}
         self.question_word_list: list = []
         self.on_screen: list = []
         self.start: bool = False
@@ -196,6 +112,97 @@ class State(pc.State):
             self.start = True
             return self.tick
 
+    def question_logic(self):
+        try:
+            if "-" in self.difficulty_str:
+                str_list = self.difficulty_str.split("-")
+                self.difficulty = list(range(int(str_list[0]), int(str_list[1]) + 1))
+            else:
+                self.difficulty = [int(self.difficulty_str)]
+        except:
+            pass
+            
+        if self.packet.strip() != "Random Question":
+            print("robert")
+            print(self.packet_questions)
+            if self.packet_questions == {}:
+                self.packet_questions = qbreader.packet(
+                    setName=self.packet, packetNumber=self.packet_num
+                )
+                #same shared logic (make function !!!!)
+                self.generated = True
+                self.packet_tu = self.packet_questions["tossups"]
+                self.question = self.packet_tu[self.question_num]
+                self.answer = self.question["answer"]
+                self.question_word_list = self.question["question"].split(" ")
+            else:
+                try:
+                    #same shared logic (make function !!!!)
+                    self.generated = True
+                    self.packet_tu = self.packet_questions["tossups"]
+                    self.question = self.packet_tu[self.question_num]
+                    self.answer = self.question["answer"]
+                    self.question_word_list = self.question["question"].split(" ")
+                except IndexError:
+                    self.packet_questions = {}
+                    self.packet_num += 1
+                    self.question_num = 0
+                    self.packet_questions = qbreader.packet(
+                        setName=self.packet, packetNumber=self.packet_num
+                    )
+                    #same shared logic (make function !!!!)
+                    self.generated = True
+                    self.packet_tu = self.packet_questions["tossups"]
+                    self.question = self.packet_tu[self.question_num]
+                    self.answer = self.question["answer"]
+                    self.question_word_list = self.question["question"].split(" ")
+
+        else:
+            question_raw = qbreader.random_question(
+                questionType=self.question_type, difficulties=self.difficulty
+            )
+            self.question = dict(question_raw[0])
+            self.answer = self.question["answer"]
+            self.generated = True
+            if self.question_type == "tossup":
+                self.question_word_list = self.question["question"].split(" ")
+            else:
+                pass
+
+        self.start = True
+        return self.tick
+    
+    @pc.var
+    def reader(self):
+        try:
+            if self.packet.strip() == "Random Question":
+                if self.correct_buzz == True:
+                    return self.question["question"]            
+                self.on_screen.append(self.question_word_list[self.x])
+                self.x += 1
+                return " ".join(self.on_screen)
+            else:
+                if self.packet_questions != {}:
+                    if self.correct_buzz == True:
+                        return self.question["question"]
+                    else:
+                        self.on_screen.append(self.question_word_list[self.x])
+                        self.x += 1
+                        return " ".join(self.on_screen)
+        except:
+            if len(self.on_screen) > 1:
+                self.finished = True
+            return " ".join(self.on_screen)
+
+    @pc.var
+    def answer_line(self) -> str:
+        try:
+            if self.finished == True or self.correct_buzz == True:
+                return str(self.answer)
+            else:
+                return ""
+        except:
+            return ""
 
 def index():
     return pc.center(
@@ -279,8 +286,8 @@ def index():
             border_radius="sm"
         ),
         pc.vstack(
-            pc.text(State.reader),
-            pc.text(State.answer_line),
+            pc.text(State.reader, font_size="1.5em",),
+            pc.text(State.answer_line, font_size="1.5em"),
             width="80%",
         ),
         width="100%",
