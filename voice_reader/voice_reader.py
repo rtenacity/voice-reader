@@ -8,7 +8,7 @@ import time
 docs_url = "https://pynecone.io/docs/getting-started/introduction"
 filename = f"{config.app_name}/{config.app_name}.py"
 
-coins = ["tossup"]
+coins = ["Literature", "Fine Arts", "Mythology", "Science", "Social Science", "Geography", "History", "Religion", "Trash", "Philosophy"]
 p1 = qbreader.set_list()
 p1.remove('2016 "stanford housewrite"')
 p1.insert(0, "Random Question")
@@ -23,7 +23,7 @@ class State(pc.State):
     difficulty_str: str = ""
     difficulty: list = []
     packet = ""
-    categories = ""
+    categories = []
     packet_num = 1
     packet_true = True
     question_num = 0
@@ -54,16 +54,31 @@ class State(pc.State):
             pass
             
         if self.packet.strip() != "Random Question":
-            self.packet_questions = qbreader.packet(
-                setName=self.packet, packetNumber=self.packet_num
-            )
-            self.generated = True
+            try:
+                self.packet_questions = qbreader.packet(
+                    setName=self.packet, packetNumber=self.packet_num
+                )
+                self.generated = True
+                self.packet_tu = self.packet_questions["tossups"]
+                self.question = self.packet_tu[self.question_num]
+                self.answer = self.question["answer"]
+            except IndexError:
+                self.packet_num += 1
+                self.question_num = 0
+                self.packet_questions = qbreader.packet(
+                    setName=self.packet, packetNumber=self.packet_num
+                )
+                self.generated = True
+                self.packet_tu = self.packet_questions["tossups"]
+                self.question = self.packet_tu[self.question_num]
+                self.answer = self.question["answer"]
 
         else:
             question_raw = qbreader.random_question(
                 questionType=self.question_type, difficulties=self.difficulty
             )
             self.question = dict(question_raw[0])
+            self.answer = self.question["answer"]
             self.generated = True
             if self.question_type == "tossup":
                 self.question_word_list = self.question["question"].split(" ")
@@ -78,12 +93,12 @@ class State(pc.State):
     
     def next_question(self):
         self.question_num +=1
+        
     
     @pc.var
     def reader(self):
         try:
             if self.packet.strip() == "Random Question":
-                self.answer = self.question["answer"]
                 if self.correct_buzz == True:
                     return self.question["question"]            
                 self.on_screen.append(self.question_word_list[self.x])
@@ -91,9 +106,6 @@ class State(pc.State):
                 return " ".join(self.on_screen)
             else:
                 if self.packet_questions != {}:
-                    self.packet_tu = self.packet_questions["tossups"]
-                    self.question = self.packet_tu[self.question_num]
-                    self.answer = self.question["answer"]
                     if self.correct_buzz == True:
                         return self.question["question"]
                     else:
@@ -119,7 +131,7 @@ class State(pc.State):
     async def tick(self):
         """Update the clock every second."""
         if self.start:
-            await asyncio.sleep(0.15)
+            await asyncio.sleep(0.2)
             return self.tick
 
     def flip_switch(self, start):
@@ -220,19 +232,19 @@ def index():
                 ),
                 pc.button(
                     "Start",
-                    width="50%",
+                    width="25%",
                     shadow="md",
                     on_click=[State.clear, State.start_packet, State.question_logic],
                 ),
                 pc.button(
                     "Next",
-                    width="50%",
+                    width="25%",
                     shadow="md",
                     on_click=[State.clear, State.next_question, State.question_logic],
                 ),
                 pc.button(
                     "Pause/Play",
-                    width="50%",
+                    width="25%",
                     shadow="md",
                     on_click=State.pause_play,
                 ),
@@ -247,16 +259,17 @@ def index():
                 pc.hstack(
                     pc.input(
                         placeholder=State.answer_status,
-                        width="50%",
+                        width="100%",
                         shadow="md",
                         on_blur=State.set_user_answer,
                     ),
                     pc.button(
                         "Submit",
-                        width="50%",
+                        width="20%",
                         shadow="md",
                         on_click=[State.buzz_logic],
                     ),
+                width="60%",
                 ),
             ),
             position="fixed",
