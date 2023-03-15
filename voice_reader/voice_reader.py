@@ -159,7 +159,7 @@ class State(pc.State):
 
         else:
             question_raw = qbreader.random_question(
-                questionType=self.question_type, difficulties=self.difficulty
+                questionType=self.question_type, difficulties=self.difficulty, categories=self.categories
             )
             self.question = dict(question_raw[0])
             self.answer = self.question["answer"]
@@ -175,20 +175,11 @@ class State(pc.State):
     @pc.var
     def reader(self):
         try:
-            if self.packet.strip() == "Random Question":
-                if self.correct_buzz == True:
-                    return self.question["question"]            
-                self.on_screen.append(self.question_word_list[self.x])
-                self.x += 1
-                return " ".join(self.on_screen)
-            else:
-                if self.packet_questions != {}:
-                    if self.correct_buzz == True:
-                        return self.question["question"]
-                    else:
-                        self.on_screen.append(self.question_word_list[self.x])
-                        self.x += 1
-                        return " ".join(self.on_screen)
+            if self.correct_buzz == True:
+                return self.question["question"]            
+            self.on_screen.append(self.question_word_list[self.x])
+            self.x += 1
+            return " ".join(self.on_screen)
         except:
             if len(self.on_screen) > 1:
                 self.finished = True
@@ -231,9 +222,9 @@ def index():
                 pc.box(
                     pc.select(
                         coins,
-                        on_change=State.set_question_type,
+                        on_change=State.set_categories,
                         shadow="md",
-                        placeholder="Select a question type.",
+                        placeholder="Select a category.",
                     ),
                     width="50%",
                 ),
