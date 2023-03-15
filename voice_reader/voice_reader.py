@@ -1,6 +1,7 @@
 from pcconfig import config
 import qbreader
 import pynecone as pc
+from pynecone.components.tags import Tag
 import asyncio
 import time
 
@@ -23,6 +24,31 @@ packets = p1
 
 categories = []
 
+class ReactSpeech(pc.Component):
+    library = "react-speech"
+    tag = "Speech"
+    text: pc.Var[str]
+    pitch: pc.Var[float] = 1
+    rate: pc.Var[float] = 1
+    volume: pc.Var[float] = 1
+    voice: pc.Var[str] = "en-US-Neural2-E"
+    text_as_button: pc.Var[bool] = True
+    display_text: pc.Var[str]
+    stop: pc.Var[bool] = False
+    pause: pc.Var[bool] = False
+    resume: pc.Var[bool] = False
+    disabled: pc.Var[bool] = False
+    
+
+    def _get_imports(self):
+        return {}
+
+    def _get_custom_code(self) -> str:
+        return """import dynamic from 'next/dynamic'
+    const Speech = dynamic(() => import('react-speech'), { ssr: false });
+    """
+    
+react_speech = ReactSpeech.create
 
 class State(pc.State):
     question_type = "tossup"
