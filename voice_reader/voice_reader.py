@@ -4,7 +4,18 @@ import pynecone as pc
 import asyncio
 import time
 
-coins = ["Literature", "Fine Arts", "Mythology", "Science", "Social Science", "Geography", "History", "Religion", "Trash", "Philosophy"]
+coins = [
+    "Literature",
+    "Fine Arts",
+    "Mythology",
+    "Science",
+    "Social Science",
+    "Geography",
+    "History",
+    "Religion",
+    "Trash",
+    "Philosophy",
+]
 p1 = qbreader.set_list()
 p1.remove('2016 "stanford housewrite"')
 p1.insert(0, "Random Question")
@@ -37,13 +48,13 @@ class State(pc.State):
     user_answer: str = ""
     checked_answer: list = []
     answer_status: str = "Buzz"
-    answer:str = ""
-    
+    answer: str = ""
+
     def start_packet(self):
         self.question_num = 0
-    
+
     def next_question(self):
-        self.question_num +=1
+        self.question_num += 1
 
     async def tick(self):
         """Update the clock every second."""
@@ -104,7 +115,7 @@ class State(pc.State):
             self.buzzed = False
             self.start = True
             return self.tick
-    
+
     def pause_play(self):
         if self.start == True:
             self.start = False
@@ -121,7 +132,7 @@ class State(pc.State):
                 self.difficulty = [int(self.difficulty_str)]
         except:
             pass
-            
+
         if self.packet.strip() != "Random Question":
             print("robert")
             print(self.packet_questions)
@@ -129,7 +140,7 @@ class State(pc.State):
                 self.packet_questions = qbreader.packet(
                     setName=self.packet, packetNumber=self.packet_num
                 )
-                #same shared logic (make function !!!!)
+                # same shared logic (make function !!!!)
                 self.generated = True
                 self.packet_tu = self.packet_questions["tossups"]
                 self.question = self.packet_tu[self.question_num]
@@ -137,7 +148,7 @@ class State(pc.State):
                 self.question_word_list = self.question["question"].split(" ")
             else:
                 try:
-                    #same shared logic (make function !!!!)
+                    # same shared logic (make function !!!!)
                     self.generated = True
                     self.packet_tu = self.packet_questions["tossups"]
                     self.question = self.packet_tu[self.question_num]
@@ -150,7 +161,7 @@ class State(pc.State):
                     self.packet_questions = qbreader.packet(
                         setName=self.packet, packetNumber=self.packet_num
                     )
-                    #same shared logic (make function !!!!)
+                    # same shared logic (make function !!!!)
                     self.generated = True
                     self.packet_tu = self.packet_questions["tossups"]
                     self.question = self.packet_tu[self.question_num]
@@ -159,7 +170,9 @@ class State(pc.State):
 
         else:
             question_raw = qbreader.random_question(
-                questionType=self.question_type, difficulties=self.difficulty, categories=self.categories
+                questionType=self.question_type,
+                difficulties=self.difficulty,
+                categories=self.categories,
             )
             self.question = dict(question_raw[0])
             self.answer = self.question["answer"]
@@ -171,12 +184,12 @@ class State(pc.State):
 
         self.start = True
         return self.tick
-    
+
     @pc.var
     def reader(self):
         try:
             if self.correct_buzz == True:
-                return self.question["question"]            
+                return self.question["question"]
             self.on_screen.append(self.question_word_list[self.x])
             self.x += 1
             return " ".join(self.on_screen)
@@ -194,6 +207,7 @@ class State(pc.State):
                 return ""
         except:
             return ""
+
 
 def index():
     return pc.center(
@@ -267,23 +281,25 @@ def index():
                         shadow="md",
                         on_click=[State.buzz_logic],
                     ),
-                width="60%",
+                    width="60%",
                 ),
             ),
             position="fixed",
             width="100%",
             top="0px",
             z_index="5",
-            border_radius="sm"
+            border_radius="sm",
         ),
         pc.vstack(
-            pc.text(State.reader, font_size="1.5em",),
+            pc.text(
+                State.reader,
+                font_size="1.5em",
+            ),
             pc.text(State.answer_line, font_size="1.5em"),
             width="80%",
         ),
         width="100%",
         height="100vh",
-       
     )
 
 
